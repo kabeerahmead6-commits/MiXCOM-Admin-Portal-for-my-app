@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiXCOM Admin Portal — Live Supabase</title>
+  <style>
+    :root {
+      --royal: #1d3587;
+      --deep: #0e236b;
+      --red: #d32f2f;
+      --gold: #d4af37;
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --text: #1b2234;
+      --muted: #64708a;
+      --green: #2e7d32;
+      --amber: #ef6c00;
+      --border: #e3e7f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); }
+    header {
+      background: linear-gradient(135deg, var(--deep), var(--royal));
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(14, 35, 107, 0.2);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .badge {
+      background: var(--gold);
+      color: #111;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .brand h1 { font-size: 19px; font-weight: 700; }
+    .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    button:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-red { background: var(--red); color: #fff; }
+    .btn-royal { background: var(--royal); color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-amber { background: var(--amber); color: #fff; }
+    .btn-outline { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.35); }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+    .container { max-width: 1280px; margin: 20px auto; padding: 0 16px 48px; }
+    .config-bar {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      display: grid;
+      grid-template-columns: 1.4fr 1.4fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+    @media (max-width: 768px) {
+      .config-bar { grid-template-columns: 1fr; }
+    }
+    .field label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+    .field input, .field select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      background: #fafbfe;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      background: #fff;
+      color: var(--royal);
+      border: 1px solid var(--border);
+      padding: 10px 15px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .tab-btn.active { background: var(--royal); color: #fff; border-color: var(--royal); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .stat-val { font-size: 22px; font-weight: 800; color: var(--royal); margin-top: 6px; }
+    .stat-val.gold { color: #9c7a00; }
+    .stat-val.green { color: var(--green); }
+    .stat-val.red { color: var(--red); }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .panel-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .panel h2 { font-size: 17px; color: var(--royal); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .toolbar input {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      min-width: 220px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #f8f9fd; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .empty-row { text-align: center; color: var(--muted); padding: 20px; font-size: 13px; }
+    .pill {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .pill-ok { background: #e8f5e9; color: var(--green); }
+    .pill-warn { background: #fff3e0; color: var(--amber); }
+    .pill-bad { background: #ffebee; color: var(--red); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+      background: #f9fafe;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px dashed #cbd3e6;
+    }
+    .sim-box {
+      background: #f2f5fc;
+      border: 1px solid #d4def5;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+    }
+    .sim-item strong { display: block; font-size: 16px; color: var(--royal); margin-top: 2px; }
+    .sim-item span { font-size: 11px; color: var(--muted); }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--deep);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 99;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="badge">MIXCOM ADMIN</span>
+      <h1>Live Supabase Control Center</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" onclick="syncAll(true)">Sync Supabase</button>
+      <button class="btn-red" onclick="exportSupabaseData()">Export JSON</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="config-bar">
+      <div class="field">
+        <label>Supabase Project URL</label>
+        <input id="sbUrl" type="text" placeholder="https://xxxx.supabase.co" />
+      </div>
+      <div class="field">
+        <label>Supabase Anon Key</label>
+        <input id="sbKey" type="password" placeholder="eyJhbGciOi..." />
+      </div>
+      <div>
+        <button class="btn-royal" style="width:100%" onclick="saveConfigAndSync()">Connect Supabase</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('overview', this)">Overview & Simulator</button>
+      <button class="tab-btn" onclick="switchTab('commissions', this)">Service Commissions</button>
+      <button class="tab-btn" onclick="switchTab('offers', this)">Cashback & Offers</button>
+      <button class="tab-btn" onclick="switchTab('payouts', this)">Payouts & VA Credits</button>
+      <button class="tab-btn" onclick="switchTab('distributors', this)">Distributors</button>
+      <button class="tab-btn" onclick="switchTab('agents', this)">Agents & KYC</button>
+      <button class="tab-btn" onclick="switchTab('customers', this)">Customers & Virtual A/C</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Distributors</div>
+        <div class="stat-val" id="stDist">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Agents (Verified)</div>
+        <div class="stat-val green" id="stAgents">0 (0)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Commission Rules</div>
+        <div class="stat-val" id="stRules">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Cashback Offers</div>
+        <div class="stat-val gold" id="stOffers">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Payouts</div>
+        <div class="stat-val red" id="stPayouts">0</div>
+      </div>
+    </div>
+
+    <!-- OVERVIEW + SIMULATOR -->
+    <div id="tab-overview" class="panel">
+      <div class="panel-top">
+        <h2>Commission & Cashback Calculator (From Supabase Rules)</h2>
+        <span id="syncStatus" style="font-size:12px;color:var(--muted)">Not connected</span>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Service Rule</label>
+          <select id="simService" onchange="runSimulator()"></select>
+        </div>
+        <div class="field">
+          <label>Transaction Amount (₹)</label>
+          <input id="simAmount" type="number" value="1000" min="1" oninput="runSimulator()" />
+        </div>
+        <div class="field">
+          <label>Customer Offer</label>
+          <select id="simOffer" onchange="runSimulator()"></select>
+        </div>
+      </div>
+      <div class="sim-box">
+        <div class="sim-item"><span>Distributor Commission</span><strong id="simDistAmt">₹0.00</strong></div>
+        <div class="sim-item"><span>Agent Commission</span><strong id="simAgentAmt">₹0.00</strong></div>
+        <div class="sim-item"><span>Customer Cashback</span><strong id="simCashbackAmt">₹0.00</strong></div>
+        <div class="sim-item"><span>Total Outflow</span><strong id="simTotalOut">₹0.00</strong></div>
+      </div>
+    </div>
+
+    <!-- SERVICE COMMISSIONS -->
+    <div id="tab-commissions" class="panel" style="display:none">
+      <div class="panel-top">
+        <h2>Distributor & Agent Service-Wise Commission Structure</h2>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>Service Code</label><input id="ruleCode" placeholder="AEPS" /></div>
+        <div class="field"><label>Service Name</label><input id="ruleName" placeholder="AEPS Cash Withdrawal" /></div>
+        <div class="field">
+          <label>Mode</label>
+          <select id="ruleMode">
+            <option value="PERCENT">Percentage (%)</option>
+            <option value="FLAT">Flat (₹)</option>
+          </select>
+        </div>
+        <div class="field"><label>Distributor Rate</label><input id="ruleDistRate" type="number" step="0.01" value="0" /></div>
+        <div class="field"><label>Agent Rate</label><input id="ruleAgentRate" type="number" step="0.01" value="0" /></div>
+        <div style="display:flex;align-items:end">
+          <button class="btn-red" style="width:100%" onclick="saveCommissionRule()">Save to Supabase</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th><th>Service Name</th><th>Mode</th><th>Distributor</th><th>Agent</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rulesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- OFFERS & CASHBACK -->
+    <div id="tab-offers" class="panel" style="display:none">
+      <div class="panel-top">
+        <h2>Individual Customer Cashback & Offers</h2>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>Offer Code</label><input id="offerCode" placeholder="GOLD50" /></div>
+        <div class="field"><label>Offer Title</label><input id="offerTitle" placeholder="Cashback Offer" /></div>
+        <div class="field">
+          <label>Service</label>
+          <select id="offerService">
+            <option value="ALL">ALL Services</option>
+            <option value="GOLD">24K Gold</option>
+            <option value="BBPS">BBPS / Bills</option>
+            <option value="RECHARGE">Recharge</option>
+            <option value="DMT">Money Transfer</option>
+          </select>
+        </div>
+        <div class="field"><label>Min Txn (₹)</label><input id="offerMin" type="number" value="0" /></div>
+        <div class="field">
+          <label>Cashback Type</label>
+          <select id="offerMode">
+            <option value="FLAT">Flat (₹)</option>
+            <option value="PERCENT">Percentage (%)</option>
+          </select>
+        </div>
+        <div class="field"><label>Value</label><input id="offerVal" type="number" step="0.1" value="0" /></div>
+        <div class="field"><label>Max Cap (₹)</label><input id="offerCap" type="number" value="0" /></div>
+        <div style="display:flex;align-items:end">
+          <button class="btn-red" style="width:100%" onclick="saveOffer()">Save to Supabase</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th><th>Title</th><th>Service</th><th>Min Txn</th><th>Cashback</th><th>Max Cap</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="offersBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAYOUT APPROVALS & VA WEBHOOK SETTLEMENT -->
+    <div id="tab-payouts" class="panel" style="display:none">
+      <div class="panel-top">
+        <h2>Agent & Distributor Payout Approvals</h2>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Role</label>
+          <select id="payRole">
+            <option value="DISTRIBUTOR">DISTRIBUTOR</option>
+            <option value="AGENT">AGENT</option>
+          </select>
+        </div>
+        <div class="field"><label>Holder ID</label><input id="payHolder" placeholder="Enter ID" /></div>
+        <div class="field"><label>Amount (₹)</label><input id="payAmt" type="number" value="0" /></div>
+        <div class="field"><label>Bank / UPI Info</label><input id="payBank" placeholder="Account / UPI" /></div>
+        <div style="display:flex;align-items:end">
+          <button class="btn-royal" style="width:100%" onclick="createPayoutRequest()">Save Payout</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ref</th><th>Role</th><th>ID</th><th>Amount (₹)</th><th>Bank</th><th>Status</th><th>Approval</th>
+            </tr>
+          </thead>
+          <tbody id="payoutsBody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel-top" style="margin-top:24px">
+        <h2>Connected Banking Virtual A/C Credit Settlement</h2>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>UTR / Ref</label><input id="vaUtr" placeholder="UTR Ref" /></div>
+        <div class="field"><label>Virtual A/C No</label><input id="vaAcc" placeholder="Virtual A/C No" /></div>
+        <div class="field"><label>Customer ID</label><input id="vaCust" placeholder="Customer ID" /></div>
+        <div class="field"><label>Credit Amount (₹)</label><input id="vaAmt" type="number" value="0" /></div>
+        <div style="display:flex;align-items:end">
+          <button class="btn-green" style="width:100%" onclick="settleVaCredit()">Save Credit</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>UTR</th><th>Virtual A/C</th><th>Customer ID</th><th>Amount (₹)</th><th>Channel</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="vaCreditsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DISTRIBUTORS -->
+    <div id="tab-distributors" class="panel" style="display:none">
+      <div class="panel-top">
+        <h2>Distributors Directory</h2>
+        <div class="toolbar">
+          <input id="searchDist" type="text" placeholder="Search distributor..." oninput="renderDistributors()" />
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Phone</th><th>City</th><th>Wallet (₹)</th><th>Commission (₹)</th></tr>
+          </thead>
+          <tbody id="distBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AGENTS -->
+    <div id="tab-agents" class="panel" style="display:none">
+      <div class="panel-top">
+        <h2>Agents & KYC Verification</h2>
+        <div class="toolbar">
+          <input id="searchAgent" type="text" placeholder="Search agent..." oninput="renderAgents()" />
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Agent ID</th><th>Name</th><th>Shop</th><th>Distributor</th><th>Phone</th><th>KYC</th><th>Action</th></tr>
+          </thead>
+          <tbody id="agentBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div id="tab-customers" class="panel" style="display:none">
+      <div class="panel-top">
+        <h2>Customers & Virtual Bank Accounts</h2>
+        <div class="toolbar">
+          <input id="searchCust" type="text" placeholder="Search customer..." oninput="renderCustomers()" />
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Customer ID</th><th>Name</th><th>Virtual A/C</th><th>IFSC</th><th>Virtual UPI</th><th>Status</th></tr>
+          </thead>
+          <tbody id="custBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const sbState = {
+      distributors: [],
+      agents: [],
+      customers: [],
+      commissionRules: [],
+      offers: [],
+      payouts: [],
+      vaCredits: []
+    };
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.style.display = "block";
+      clearTimeout(window._t);
+      window._t = setTimeout(() => { el.style.display = "none"; }, 2800);
+    }
+
+    function switchTab(name, btn) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      ["overview", "commissions", "offers", "payouts", "distributors", "agents", "customers"].forEach(id => {
+        document.getElementById("tab-" + id).style.display = id === name ? "block" : "none";
+      });
+    }
+
+    function getSbConfig() {
+      const url = document.getElementById("sbUrl").value.trim().replace(/\/+$/, "");
+      const key = document.getElementById("sbKey").value.trim();
+      const valid = Boolean(url && key && url.startsWith("http") && !url.includes("YOUR_PROJECT_ID"));
+      return { url, key, valid };
+    }
+
+    function loadSavedConfig() {
+      document.getElementById("sbUrl").value = localStorage.getItem("mixcom_sb_url") || "";
+      document.getElementById("sbKey").value = localStorage.getItem("mixcom_sb_key") || "";
+    }
+
+    function saveConfigAndSync() {
+      const { url, key } = getSbConfig();
+      localStorage.setItem("mixcom_sb_url", url);
+      localStorage.setItem("mixcom_sb_key", key);
+      syncAll(true);
+    }
+
+    async function readSupabaseTable(table) {
+      const { url, key, valid } = getSbConfig();
+      if (!valid) throw new Error("Supabase URL or Anon Key missing");
+      const res = await fetch(`${url}/rest/v1/${table}?select=*`, {
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`
+        }
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`${table}: ${res.status} ${errText}`);
+      }
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    }
+
+    async function writeSupabaseRow(table, onConflict, rowObj) {
+      const { url, key, valid } = getSbConfig();
+      if (!valid) {
+        showToast("Enter valid Supabase URL and Anon Key first");
+        return false;
+      }
+      const endpoint = onConflict
+        ? `${url}/rest/v1/${table}?on_conflict=${encodeURIComponent(onConflict)}`
+        : `${url}/rest/v1/${table}`;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+          Prefer: onConflict ? "resolution=merge-duplicates,return=minimal" : "return=minimal"
+        },
+        body: JSON.stringify(rowObj)
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        showToast(`Save failed (${table}): ${errText.slice(0, 90)}`);
+        return false;
+      }
+      return true;
+    }
+
+    async function syncAll(notify) {
+      const statusEl = document.getElementById("syncStatus");
+      const { valid } = getSbConfig();
+
+      if (!valid) {
+        sbState.distributors = [];
+        sbState.agents = [];
+        sbState.customers = [];
+        sbState.commissionRules = [];
+        sbState.offers = [];
+        sbState.payouts = [];
+        sbState.vaCredits = [];
+        statusEl.textContent = "Supabase not connected (0 records)";
+        renderAll();
+        if (notify) showToast("Please enter Supabase URL and Anon Key");
+        return;
+      }
+
+      statusEl.textContent = "Loading live data from Supabase...";
+      const results = await Promise.allSettled([
+        readSupabaseTable("distributors"),
+        readSupabaseTable("agent_security"),
+        readSupabaseTable("customer_virtual_accounts"),
+        readSupabaseTable("service_commission_rules"),
+        readSupabaseTable("customer_offers"),
+        readSupabaseTable("payout_requests"),
+        readSupabaseTable("virtual_account_credits")
+      ]);
+
+      sbState.distributors = results[0].status === "fulfilled" ? results[0].value : [];
+      sbState.agents = results[1].status === "fulfilled" ? results[1].value : [];
+      sbState.customers = results[2].status === "fulfilled" ? results[2].value : [];
+      sbState.commissionRules = results[3].status === "fulfilled" ? results[3].value : [];
+      sbState.offers = results[4].status === "fulfilled" ? results[4].value : [];
+      sbState.payouts = results[5].status === "fulfilled" ? results[5].value : [];
+      sbState.vaCredits = results[6].status === "fulfilled" ? results[6].value : [];
+
+      const failed = results.filter(r => r.status === "rejected");
+      if (failed.length === 0) {
+        statusEl.textContent = "Connected • Live Supabase Data";
+        if (notify) showToast("Synced live data from Supabase");
+      } else {
+        statusEl.textContent = `Connected with ${failed.length} table warning(s)`;
+        if (notify) showToast("Synced available tables; check table/RLS permissions");
+      }
+
+      renderAll();
+    }
+
+    async function saveCommissionRule() {
+      const code = document.getElementById("ruleCode").value.trim().toUpperCase();
+      const name = document.getElementById("ruleName").value.trim();
+      const mode = document.getElementById("ruleMode").value;
+      const dRate = parseFloat(document.getElementById("ruleDistRate").value) || 0;
+      const aRate = parseFloat(document.getElementById("ruleAgentRate").value) || 0;
+      if (!code || !name) return showToast("Enter service code and name");
+
+      const rule = {
+        service_code: code,
+        service_name: name,
+        calc_mode: mode,
+        distributor_rate: dRate,
+        agent_rate: aRate,
+        is_active: true
+      };
+      const ok = await writeSupabaseRow("service_commission_rules", "service_code", rule);
+      if (ok) {
+        showToast(`Saved ${code} to Supabase`);
+        await syncAll(false);
+      }
+    }
+
+    function editRuleToForm(code) {
+      const r = sbState.commissionRules.find(x => x.service_code === code);
+      if (!r) return;
+      document.getElementById("ruleCode").value = r.service_code;
+      document.getElementById("ruleName").value = r.service_name;
+      document.getElementById("ruleMode").value = r.calc_mode;
+      document.getElementById("ruleDistRate").value = r.distributor_rate;
+      document.getElementById("ruleAgentRate").value = r.agent_rate;
+      showToast(`Loaded ${code}`);
+    }
+
+    async function toggleRule(code) {
+      const r = sbState.commissionRules.find(x => x.service_code === code);
+      if (!r) return;
+      const ok = await writeSupabaseRow("service_commission_rules", "service_code", {
+        ...r,
+        is_active: !r.is_active
+      });
+      if (ok) await syncAll(false);
+    }
+
+    async function saveOffer() {
+      const code = document.getElementById("offerCode").value.trim().toUpperCase();
+      const title = document.getElementById("offerTitle").value.trim();
+      const svc = document.getElementById("offerService").value;
+      const minTxn = parseFloat(document.getElementById("offerMin").value) || 0;
+      const mode = document.getElementById("offerMode").value;
+      const val = parseFloat(document.getElementById("offerVal").value) || 0;
+      const cap = parseFloat(document.getElementById("offerCap").value) || 0;
+      if (!code || !title) return showToast("Enter offer code and title");
+
+      const offer = {
+        offer_code: code,
+        title,
+        applicable_service: svc,
+        min_txn_amount: minTxn,
+        cashback_mode: mode,
+        cashback_value: val,
+        max_cashback: cap,
+        is_active: true
+      };
+      const ok = await writeSupabaseRow("customer_offers", "offer_code", offer);
+      if (ok) {
+        showToast(`Saved offer ${code} to Supabase`);
+        await syncAll(false);
+      }
+    }
+
+    function editOfferToForm(code) {
+      const o = sbState.offers.find(x => x.offer_code === code);
+      if (!o) return;
+      document.getElementById("offerCode").value = o.offer_code;
+      document.getElementById("offerTitle").value = o.title;
+      document.getElementById("offerService").value = o.applicable_service;
+      document.getElementById("offerMin").value = o.min_txn_amount;
+      document.getElementById("offerMode").value = o.cashback_mode;
+      document.getElementById("offerVal").value = o.cashback_value;
+      document.getElementById("offerCap").value = o.max_cashback;
+      showToast(`Loaded offer ${code}`);
+    }
+
+    async function toggleOffer(code) {
+      const o = sbState.offers.find(x => x.offer_code === code);
+      if (!o) return;
+      const ok = await writeSupabaseRow("customer_offers", "offer_code", {
+        ...o,
+        is_active: !o.is_active
+      });
+      if (ok) await syncAll(false);
+    }
+
+    async function createPayoutRequest() {
+      const role = document.getElementById("payRole").value;
+      const holder = document.getElementById("payHolder").value.trim().toUpperCase();
+      const amt = parseFloat(document.getElementById("payAmt").value) || 0;
+      const bank = document.getElementById("payBank").value.trim();
+      if (!holder || amt <= 0) return showToast("Enter ID and valid amount");
+
+      const row = {
+        payout_ref: "PAY-" + Math.floor(100000 + Math.random() * 900000),
+        holder_type: role,
+        holder_id: holder,
+        amount: amt,
+        bank_info: bank || "-",
+        status: "PENDING"
+      };
+      const ok = await writeSupabaseRow("payout_requests", "payout_ref", row);
+      if (ok) {
+        showToast(`Saved payout ${row.payout_ref}`);
+        await syncAll(false);
+      }
+    }
+
+    async function setPayoutStatus(refId, status) {
+      const p = sbState.payouts.find(x => x.payout_ref === refId);
+      if (!p) return;
+      const ok = await writeSupabaseRow("payout_requests", "payout_ref", {
+        ...p,
+        status
+      });
+      if (ok) {
+        showToast(`${refId} -> ${status}`);
+        await syncAll(false);
+      }
+    }
+
+    async function settleVaCredit() {
+      const utr = document.getElementById("vaUtr").value.trim().toUpperCase();
+      const acc = document.getElementById("vaAcc").value.trim().toUpperCase();
+      const cust = document.getElementById("vaCust").value.trim().toUpperCase();
+      const amt = parseFloat(document.getElementById("vaAmt").value) || 0;
+      if (!utr || !cust || amt <= 0) return showToast("Enter UTR, Customer ID and amount");
+
+      const row = {
+        utr_ref: utr,
+        virtual_account_no: acc || "-",
+        customer_id: cust,
+        amount: amt,
+        channel: "CONNECTED-BANKING",
+        status: "CREDITED"
+      };
+      const ok = await writeSupabaseRow("virtual_account_credits", "utr_ref", row);
+      if (ok) {
+        showToast(`Saved VA credit ${utr}`);
+        await syncAll(false);
+      }
+    }
+
+    async function toggleAgentKyc(agentId) {
+      const ag = sbState.agents.find(x => x.user_id === agentId);
+      if (!ag) return;
+      const nextStatus = (ag.kyc_status || "").toUpperCase() === "VERIFIED" ? "PENDING" : "VERIFIED";
+      const ok = await writeSupabaseRow("agent_security", "user_id", {
+        ...ag,
+        kyc_status: nextStatus
+      });
+      if (ok) {
+        showToast(`${agentId} -> ${nextStatus}`);
+        await syncAll(false);
+      }
+    }
+
+    function populateSimulatorOptions() {
+      const svcSel = document.getElementById("simService");
+      const prevSvc = svcSel.value;
+      const activeRules = sbState.commissionRules.filter(r => Boolean(r.is_active));
+      svcSel.innerHTML = activeRules.length
+        ? activeRules.map(r => `<option value="${r.service_code}">${r.service_code} — ${r.service_name}</option>`).join("")
+        : `<option value="">No active rules in Supabase</option>`;
+      if (prevSvc) svcSel.value = prevSvc;
+
+      const offSel = document.getElementById("simOffer");
+      const prevOff = offSel.value;
+      const activeOffers = sbState.offers.filter(o => Boolean(o.is_active));
+      offSel.innerHTML = `<option value="NONE">No Offer</option>` + activeOffers
+        .map(o => `<option value="${o.offer_code}">${o.offer_code} (${o.title})</option>`)
+        .join("");
+      if (prevOff) offSel.value = prevOff;
+
+      runSimulator();
+    }
+
+    function runSimulator() {
+      const code = document.getElementById("simService").value;
+      const amt = parseFloat(document.getElementById("simAmount").value) || 0;
+      const offerCode = document.getElementById("simOffer").value;
+
+      const rule = sbState.commissionRules.find(r => r.service_code === code);
+      let dAmt = 0, aAmt = 0;
+      if (rule) {
+        if (rule.calc_mode === "FLAT") {
+          dAmt = Number(rule.distributor_rate || 0);
+          aAmt = Number(rule.agent_rate || 0);
+        } else {
+          dAmt = amt * (Number(rule.distributor_rate || 0) / 100);
+          aAmt = amt * (Number(rule.agent_rate || 0) / 100);
+        }
+      }
+
+      let cbAmt = 0;
+      const offer = sbState.offers.find(o => o.offer_code === offerCode);
+      if (offer && amt >= Number(offer.min_txn_amount || 0)) {
+        if (offer.cashback_mode === "FLAT") {
+          cbAmt = Number(offer.cashback_value || 0);
+        } else {
+          cbAmt = amt * (Number(offer.cashback_value || 0) / 100);
+        }
+        if (Number(offer.max_cashback || 0) > 0) {
+          cbAmt = Math.min(cbAmt, Number(offer.max_cashback));
+        }
+      }
+
+      document.getElementById("simDistAmt").textContent = "₹" + dAmt.toFixed(2);
+      document.getElementById("simAgentAmt").textContent = "₹" + aAmt.toFixed(2);
+      document.getElementById("simCashbackAmt").textContent = "₹" + cbAmt.toFixed(2);
+      document.getElementById("simTotalOut").textContent = "₹" + (dAmt + aAmt + cbAmt).toFixed(2);
+    }
+
+    function renderAll() {
+      const verifiedCnt = sbState.agents.filter(a => (a.kyc_status || "").toUpperCase() === "VERIFIED").length;
+      const activeRules = sbState.commissionRules.filter(r => Boolean(r.is_active)).length;
+      const activeOffers = sbState.offers.filter(o => Boolean(o.is_active)).length;
+      const pendingPayouts = sbState.payouts.filter(p => (p.status || "").toUpperCase() === "PENDING").length;
+
+      document.getElementById("stDist").textContent = sbState.distributors.length;
+      document.getElementById("stAgents").textContent = `${sbState.agents.length} (${verifiedCnt})`;
+      document.getElementById("stRules").textContent = activeRules;
+      document.getElementById("stOffers").textContent = activeOffers;
+      document.getElementById("stPayouts").textContent = pendingPayouts;
+
+      populateSimulatorOptions();
+      renderRules();
+      renderOffers();
+      renderPayouts();
+      renderVaCredits();
+      renderDistributors();
+      renderAgents();
+      renderCustomers();
+    }
+
+    function renderRules() {
+      const body = document.getElementById("rulesBody");
+      if (!sbState.commissionRules.length) {
+        body.innerHTML = `<tr><td colspan="7" class="empty-row">No commission rules found in Supabase.</td></tr>`;
+        return;
+      }
+      body.innerHTML = sbState.commissionRules.map(r => {
+        const isFlat = r.calc_mode === "FLAT";
+        const active = Boolean(r.is_active);
+        return `
+          <tr>
+            <td><strong>${r.service_code || ""}</strong></td>
+            <td>${r.service_name || ""}</td>
+            <td>${r.calc_mode || ""}</td>
+            <td>${isFlat ? "₹" + Number(r.distributor_rate || 0).toFixed(2) : Number(r.distributor_rate || 0) + "%"}</td>
+            <td>${isFlat ? "₹" + Number(r.agent_rate || 0).toFixed(2) : Number(r.agent_rate || 0) + "%"}</td>
+            <td><span class="pill ${active ? "pill-ok" : "pill-warn"}">${active ? "ACTIVE" : "PAUSED"}</span></td>
+            <td>
+              <button class="btn-sm btn-royal" onclick="editRuleToForm('${r.service_code}')">Edit</button>
+              <button class="btn-sm btn-amber" onclick="toggleRule('${r.service_code}')">${active ? "Pause" : "Enable"}</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderOffers() {
+      const body = document.getElementById("offersBody");
+      if (!sbState.offers.length) {
+        body.innerHTML = `<tr><td colspan="8" class="empty-row">No customer offers found in Supabase.</td></tr>`;
+        return;
+      }
+      body.innerHTML = sbState.offers.map(o => {
+        const active = Boolean(o.is_active);
+        return `
+          <tr>
+            <td><strong>${o.offer_code || ""}</strong></td>
+            <td>${o.title || ""}</td>
+            <td>${o.applicable_service || "ALL"}</td>
+            <td>₹${Number(o.min_txn_amount || 0).toFixed(0)}</td>
+            <td>${o.cashback_mode === "FLAT" ? "₹" + Number(o.cashback_value || 0).toFixed(2) : Number(o.cashback_value || 0) + "%"}</td>
+            <td>₹${Number(o.max_cashback || 0).toFixed(0)}</td>
+            <td><span class="pill ${active ? "pill-ok" : "pill-warn"}">${active ? "ACTIVE" : "PAUSED"}</span></td>
+            <td>
+              <button class="btn-sm btn-royal" onclick="editOfferToForm('${o.offer_code}')">Edit</button>
+              <button class="btn-sm btn-amber" onclick="toggleOffer('${o.offer_code}')">${active ? "Pause" : "Enable"}</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderPayouts() {
+      const body = document.getElementById("payoutsBody");
+      if (!sbState.payouts.length) {
+        body.innerHTML = `<tr><td colspan="7" class="empty-row">No payout records found in Supabase.</td></tr>`;
+        return;
+      }
+      body.innerHTML = sbState.payouts.map(p => {
+        const st = (p.status || "PENDING").toUpperCase();
+        const cls = st === "APPROVED" ? "pill-ok" : st === "REJECTED" ? "pill-bad" : "pill-warn";
+        return `
+          <tr>
+            <td><strong>${p.payout_ref || ""}</strong></td>
+            <td>${p.holder_type || ""}</td>
+            <td>${p.holder_id || ""}</td>
+            <td><strong>₹${Number(p.amount || 0).toFixed(2)}</strong></td>
+            <td>${p.bank_info || "-"}</td>
+            <td><span class="pill ${cls}">${st}</span></td>
+            <td>
+              <button class="btn-sm btn-green" onclick="setPayoutStatus('${p.payout_ref}', 'APPROVED')">Approve</button>
+              <button class="btn-sm btn-red" onclick="setPayoutStatus('${p.payout_ref}', 'REJECTED')">Reject</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderVaCredits() {
+      const body = document.getElementById("vaCreditsBody");
+      if (!sbState.vaCredits.length) {
+        body.innerHTML = `<tr><td colspan="6" class="empty-row">No virtual account credits found in Supabase.</td></tr>`;
+        return;
+      }
+      body.innerHTML = sbState.vaCredits.map(v => `
+        <tr>
+          <td><strong>${v.utr_ref || ""}</strong></td>
+          <td>${v.virtual_account_no || "-"}</td>
+          <td>${v.customer_id || ""}</td>
+          <td><strong>+₹${Number(v.amount || 0).toFixed(2)}</strong></td>
+          <td>${v.channel || "-"}</td>
+          <td><span class="pill pill-ok">${v.status || "CREDITED"}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderDistributors() {
+      const q = (document.getElementById("searchDist")?.value || "").toLowerCase();
+      const rows = sbState.distributors.filter(d => !q || JSON.stringify(d).toLowerCase().includes(q));
+      const body = document.getElementById("distBody");
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="6" class="empty-row">No distributors found in Supabase.</td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map(d => `
+        <tr>
+          <td><strong>${d.distributor_id || ""}</strong></td>
+          <td>${d.full_name || ""}</td>
+          <td>${d.phone || "-"}</td>
+          <td>${d.city || "-"}</td>
+          <td>₹${Number(d.wallet_balance || 0).toFixed(2)}</td>
+          <td><strong>₹${Number(d.total_commission || 0).toFixed(2)}</strong></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAgents() {
+      const q = (document.getElementById("searchAgent")?.value || "").toLowerCase();
+      const rows = sbState.agents.filter(a => !q || JSON.stringify(a).toLowerCase().includes(q));
+      const body = document.getElementById("agentBody");
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="7" class="empty-row">No agents found in Supabase.</td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map(a => {
+        const ok = (a.kyc_status || "").toUpperCase() === "VERIFIED";
+        return `
+          <tr>
+            <td><strong>${a.user_id || ""}</strong></td>
+            <td>${a.agent_name || "-"}</td>
+            <td>${a.shop_name || "-"}</td>
+            <td>${a.distributor_id || "-"}</td>
+            <td>${a.phone || "-"}</td>
+            <td><span class="pill ${ok ? "pill-ok" : "pill-warn"}">${ok ? "VERIFIED" : "PENDING"}</span></td>
+            <td><button class="btn-sm ${ok ? "btn-royal" : "btn-green"}" onclick="toggleAgentKyc('${a.user_id}')">${ok ? "Set Pending" : "Verify KYC"}</button></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderCustomers() {
+      const q = (document.getElementById("searchCust")?.value || "").toLowerCase();
+      const rows = sbState.customers.filter(c => !q || JSON.stringify(c).toLowerCase().includes(q));
+      const body = document.getElementById("custBody");
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="6" class="empty-row">No customer virtual accounts found in Supabase.</td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map(c => `
+        <tr>
+          <td><strong>${c.customer_id || ""}</strong></td>
+          <td>${c.full_name || ""}</td>
+          <td><strong>${c.virtual_account_no || "-"}</strong></td>
+          <td>${c.ifsc_code || "-"}</td>
+          <td>${c.virtual_upi_id || "-"}</td>
+          <td><span class="pill pill-ok">${c.status || "ACTIVE"}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function exportSupabaseData() {
+      const blob = new Blob([JSON.stringify(sbState, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "mixcom-supabase-live-export.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Exported live Supabase data");
+    }
+
+    loadSavedConfig();
+    syncAll(false);
+  </script>
+</body>
+</html>
